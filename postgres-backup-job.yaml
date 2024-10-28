@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgresql-backup-cron-job
+spec:
+  schedule: "0 1 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure  
+          containers:
+          - name: postgresql-backup-job-pod
+            image: <my dockerfile image>
+            imagePullPolicy: Always  
+            env:
+              - name: S3_BUCKET
+                value: "s3://<your bucket>"
+              - name: PG_PASS
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-pg-secret
+                    key: pg-pass
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-pg-secret
+                    key: aws-access-key-id
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-pg-secret
+                    key: aws-secret-access-key
+              - name: AWS_DEFAULT_REGION
+                value: <"your-region">
+            args:
+            - /bin/bash
+            - -c
+            - cd /home/root; ls; bash postgres-backup.sh;
+
